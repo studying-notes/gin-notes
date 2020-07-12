@@ -32,3 +32,11 @@ _, err = db.Exec(sql)
 ```go
 rows, err := db.Query(sql)
 ```
+
+## xorm
+
+一般而言，通过框架而不是原生 SQL 操作数据库是更好的选择。
+
+```shell
+go get github.com/go-xorm/xorm
+```
