@@ -1,6 +1,9 @@
 # Gin 学习笔记
 
-其实只是简单地翻译了一遍官方的文档，算是初步熟悉一下 Gin 框架。
+- [多数据格式返回响应数据](doc/response.md)
+- [操作数据库](doc/database.md)
+
+以下只是简单地翻译了一遍官方的文档，算是初步熟悉一下 Gin 框架。（2020.07.12）
 
 ## 目录
 
@@ -20,34 +23,38 @@
     - [单个文件](#单个文件)
     - [多个文件](#多个文件)
   - [路由组](#路由组)
-  - [自定义中间件](#自定义中间件)
+  - [中间件](#中间件)
+	- [默认中间件](#默认中间件)
+	- [自定义中间件](#自定义中间件)
+	- [将中间件一分为二执行](#将中间件一分为二执行)
+	- [官方示例](#官方示例)
   - [自定义从错误中恢复的行为](#自定义从错误中恢复的行为)
   - [写入日志文件](#写入日志文件)
   - [自定义日志格式](#自定义日志格式)
   - [控制日志输出颜色](#控制日志输出颜色)
   - [类型绑定和验证](#类型绑定和验证)
-  - [自定义类型验证器](#自定义类型验证器)
-  - [只绑定查询字符串](#只绑定查询字符串)
-  - [绑定查询字符串或 POST 数据](#绑定查询字符串或-POST-数据)
-  - [绑定 URI](#绑定-URI)
-  - [绑定 Header](#绑定-Header)
-  - [绑定 HTML 复选框](#绑定-HTML-复选框)
-  - [绑定 URL 编码表单](#绑定-URL-编码表单)
+	- [自定义类型验证器](#自定义类型验证器)
+	- [只绑定查询字符串](#只绑定查询字符串)
+	- [绑定查询字符串或 POST 数据](#绑定查询字符串或-POST-数据)
+	- [绑定 URI](#绑定-URI)
+	- [绑定 Header](#绑定-Header)
+	- [绑定 HTML 复选框](#绑定-HTML-复选框)
+	- [绑定 URL 编码表单](#绑定-URL-编码表单)
+	- [尝试将 Body 绑定到不同的结构体](#尝试将-Body-绑定到不同的结构体)
   - [渲染 XML、JSON、YAML](#渲染-XML、JSON、YAML)
     - [SecureJSON](#SecureJSON)
     - [JSONP](#JSONP)
     - [AsciiJSON](#AsciiJSON)
     - [PureJSON](#PureJSON)
-  - [静态文件服务](#静态文件服务)
-  - [从文件中呈现内容](#从文件中呈现内容)
-  - [从 Reader 对象呈现内容](#从-Reader-对象呈现内容)
-  - [HTML 模板渲染](#HTML-模板渲染)
-    - [自定义模板渲染器](#自定义模板渲染器)
-    - [自定义模板函数](#自定义模板函数)
+  - [多数据格式返回响应数据](#静态文件服务)
+	- [静态文件服务](#静态文件服务)
+	- [从文件中呈现内容](#从文件中呈现内容)
+	- [从 Reader 对象呈现内容](#从-Reader-对象呈现内容)
+	- [HTML 模板渲染](#HTML-模板渲染)
+		- [自定义模板渲染器](#自定义模板渲染器)
+		- [自定义模板函数](#自定义模板函数)
   - [重定向](#重定向)
-  - [自定义中间件](#自定义中间件)
   - [控制日志输出颜色](#控制日志输出颜色)
-  - [自定义中间件](#自定义中间件)
   - [BasicAuth() 中间件](#BasicAuth()-中间件)
   - [中间件内部的 Goroutines](#中间件内部的-Goroutines)
   - [自定义 HTTP 配置](#自定义-HTTP-配置)
@@ -56,7 +63,6 @@
   - [优雅地关机或重启](#优雅地关机或重启)
   - [构建单个包括模板的二进制文件](#构建单个包括模板的二进制文件)
   - [用自定义的结构体绑定 form-data 请求](#用自定义的结构体绑定-form-data-请求)
-  - [尝试将 Body 绑定到不同的结构体](#尝试将-Body-绑定到不同的结构体)
   - [HTTP2 服务器推送技术](#HTTP2-服务器推送技术)
   - [定义路由日志的格式](#定义路由日志的格式)
   - [设置和获取 Cookie](#设置和获取-Cookie)
@@ -426,6 +432,19 @@ $ curl --location --request POST 'http://localhost:8080/upload' --form 'upload[]
 
 ### 路由组
 
+RouteGroup 可以称之为路由集合，在 Gin 中定义为结构体：
+
+```go
+type RouterGroup struct {
+    Handlers HandlersChain
+    basePath string
+    engine   *Engine
+    root     bool
+}
+```
+
+在实际的项目开发中，均是模块化开发。同一模块内的功能接口，往往会有相同的接口前缀。类似这种接口前缀统一，均属于相同模块的功能接口。可以使用路由组进行分类处理。
+
 ```go
 func main() {
 	router := gin.Default()
@@ -450,7 +469,139 @@ func main() {
 }
 ```
 
-### 自定义中间件
+RouterGroup 实现了 IRoutes 中定义的方法：
+
+```go
+type IRoutes interface {
+    Use(...HandlerFunc) IRoutes
+
+    Handle(string, string, ...HandlerFunc) IRoutes
+    Any(string, ...HandlerFunc) IRoutes
+    GET(string, ...HandlerFunc) IRoutes
+    POST(string, ...HandlerFunc) IRoutes
+    DELETE(string, ...HandlerFunc) IRoutes
+    PATCH(string, ...HandlerFunc) IRoutes
+    PUT(string, ...HandlerFunc) IRoutes
+    OPTIONS(string, ...HandlerFunc) IRoutes
+    HEAD(string, ...HandlerFunc) IRoutes
+
+    StaticFile(string, string) IRoutes
+    Static(string, string) IRoutes
+    StaticFS(string, http.FileSystem) IRoutes
+}
+```
+
+### 中间件
+
+在 Web 应用服务中，完整的一个业务处理在技术上包含客户端操作、服务器端处理、返回处理结果给客户端三个步骤。
+
+在实际的业务开发和处理中，会有更负责的业务和需求场景。一个完整的系统可能要包含鉴权认证、权限管理、安全检查、日志记录等多维度的系统支持。
+
+鉴权认证、权限管理、安全检查、日志记录等这些保障和支持系统业务属于全系统的业务，和具体的系统业务没有关联，对于系统中的所有业务都适用。
+
+由此，在业务开发过程中，为了更好的梳理系统架构，可以将上述描述所涉及的一些通用业务单独抽离并进行开发，然后以插件化的形式进行对接。这种方式既保证了系统功能的完整，同时又有效的将具体业务和系统功能进行解耦，并且，还可以达到灵活配置的目的。
+
+这种通用业务独立开发并灵活配置使用的组件，一般称之为"中间件"，因为其位于服务器和实际业务处理程序之间。其含义就是相当于在请求和具体的业务逻辑处理之间增加某些操作，这种以额外添加的方式不会影响编码效率，也不会侵入到框架中。中间件的位置和角色示意图如下图所示：
+
+![](imgs/1.png)
+
+Gin 中间件的类型定义如下所示：
+
+```go
+// HandlerFunc defines the handler used
+// by gin middleware as return value.
+type HandlerFunc func(*Context)
+```
+
+#### 默认中间件
+
+```go
+func Default() *Engine {
+    debugPrintWARNINGDefault()
+    engine := New()
+    engine.Use(Logger(), Recovery())
+    return engine
+}
+// Log 中间件
+func Logger() HandlerFunc {
+    return LoggerWithConfig(LoggerConfig{})
+}
+// Recovery 中间件
+func Recovery() HandlerFunc {
+    return RecoveryWithWriter(DefaultErrorWriter)
+}
+
+// Use 方法定义
+func (engine *Engine) Use(middleware ...HandlerFunc) IRoutes {
+    engine.RouterGroup.Use(middleware...)
+    engine.rebuild404Handlers()
+    engine.rebuild405Handlers()
+    return engine
+}
+```
+
+#### 自定义中间件
+
+处理请求时，为了方便调试，通常都将请求的一些信息打印出来。有了中间件以后，为了避免代码多次重复编写，使用统一的中间件来完成。定义一个名为 RequestInfos 的中间件，在该中间件中打印请求的 URI 和类型。
+
+```go
+func RequestInfos() gin.HandlerFunc {
+    return func(context *gin.Context) {
+        path := context.FullPath()
+        method := context.Request.Method
+        fmt.Println("URL: ", path)
+        fmt.Println("Method: ", method)
+    }
+}
+
+func main() {
+
+    engine := gin.Default()
+    engine.Use(RequestInfos())
+
+    engine.GET("/query", func(context *gin.Context) {
+        context.JSON(200, map[string]interface{}{
+            "code": 1,
+            "msg":  context.FullPath(),
+        })
+    })
+    engine.Run(":9000")
+}
+```
+
+#### 将中间件一分为二执行
+
+在上文自定义的中间件 RequestInfos 中，打印了请求信息，然后执行了正常的业务处理函数。若想输出业务处理结果的信息，可以用 `context.Next` 函数。
+
+`context.Next` 函数可以将中间件代码的执行顺序一分为二，`Next` 函数调用之前的代码在请求处理之前之前，当程序执行到 `context.Next` 时，会中断向下执行，转而先去执行具体的业务逻辑，执行完业务逻辑处理函数之后，程序会再次回到 `context.Next` 处，继续执行中间件后续的代码。
+
+```go
+func RequestInfos() gin.HandlerFunc {
+    return func(context *gin.Context) {
+        path := context.FullPath()
+        method := context.Request.Method
+        fmt.Println("URL: ", path)
+		fmt.Println("Method: ", method)
+		context.Next()
+		fmt.Println(context.Writer.Status())
+    }
+}
+
+func main() {
+    engine := gin.Default()
+    engine.Use(RequestInfos())
+
+    engine.GET("/query", func(context *gin.Context) {
+        context.JSON(404, map[string]interface{}{
+            "code": 1,
+            "msg":  context.FullPath(),
+        })
+    })
+    engine.Run(":9000")
+}
+```
+
+#### 官方示例
 
 ```go
 func main() {
@@ -618,7 +769,9 @@ func main() {
 
 ### 类型绑定和验证
 
-将请求 Body 绑定到不同的结构体中。目前支持绑定 JSON、XML、YAML 和标准表单形式。
+一般情况下，如果表单数据少，用 `context.PostForm` 或者 `context.DefaultPostForm` 获取即可，但是如果表单数据很多，一个一个获取写起来很烦。
+
+因此，Gin 可以将请求 Body 绑定到不同的结构体中。目前支持绑定 JSON、XML、YAML 和标准表单形式。
 
 注意到必须在绑定的字段上设置标签。Gin 提供了两者类型的绑定方式：
 
@@ -699,7 +852,7 @@ func main() {
 }
 ```
 
-### 自定义类型验证器
+#### 自定义类型验证器
 
 ```go
 package main
@@ -758,9 +911,9 @@ $ curl "localhost:8085/bookable?check_in=2018-04-16&check_out=2018-04-15"
 {"error":"Key: 'Booking.CheckOut' Error:Field validation for 'CheckOut' failed on the 'gtfield' tag"} 
 ```
 
-### 只绑定查询字符串
+#### 只绑定查询字符串
 
-`ShouldBindQuery` 函数只绑定查询字符串参数，不包括 POST 数据。
+`ShouldBindQuery` 函数只绑定 GET 方式的查询字符串参数，不包括 POST 数据。
 
 ```go
 package main
@@ -792,7 +945,9 @@ func startPage(c *gin.Context) {
 }
 ```
 
-### 绑定查询字符串或 POST 数据
+#### 绑定查询字符串或 POST 数据
+
+`ShouldBind` 函数可以绑定 POST 方式提交的数据。
 
 ```go
 package main
@@ -834,7 +989,7 @@ func startPage(c *gin.Context) {
 }
 ```
 
-### 绑定 URI
+#### 绑定 URI
 
 ```go
 package main
@@ -868,7 +1023,7 @@ $ curl localhost:8088/thinkerou/not-uuid
 {"msg":[{}]}
 ```
 
-### 绑定 Header
+#### 绑定 Header
 
 ```go
 package main
@@ -905,7 +1060,7 @@ $ curl -H "rate:300" -H "domain:music" 127.0.0.1:8080
 {"Domain":"music","Rate":300}
 ```
 
-### 绑定 HTML 复选框
+#### 绑定 HTML 复选框
 
 ```go
 type myForm struct {
@@ -919,7 +1074,7 @@ func formHandler(c *gin.Context) {
 }
 ```
 
-### 绑定 URL 编码表单
+#### 绑定 URL 编码表单
 
 ```go
 type ProfileForm struct {
@@ -956,6 +1111,58 @@ func main() {
 	router.Run(":8080")
 }
 ```
+
+### 尝试将 Body 绑定到不同的结构体
+
+一般的绑定请求数据的类型会消耗 `c.Request.Body`，所以不能被多次调用。
+
+```go
+type formA struct {
+  Foo string `json:"foo" xml:"foo" binding:"required"`
+}
+
+type formB struct {
+  Bar string `json:"bar" xml:"bar" binding:"required"`
+}
+
+func SomeHandler(c *gin.Context) {
+  objA := formA{}
+  objB := formB{}
+  // This c.ShouldBind consumes c.Request.Body and it cannot be reused.
+  if errA := c.ShouldBind(&objA); errA == nil {
+    c.String(http.StatusOK, `the body should be formA`)
+  // Always an error is occurred by this because c.Request.Body is EOF now.
+  } else if errB := c.ShouldBind(&objB); errB == nil {
+    c.String(http.StatusOK, `the body should be formB`)
+  } else {
+    ...
+  }
+}
+```
+
+这种情况，可以用 `c.ShouldBindBodyWith`：
+
+```go
+func SomeHandler(c *gin.Context) {
+  objA := formA{}
+  objB := formB{}
+  // This reads c.Request.Body and stores the result into the context.
+  if errA := c.ShouldBindBodyWith(&objA, binding.JSON); errA == nil {
+    c.String(http.StatusOK, `the body should be formA`)
+  // At this time, it reuses body stored in the context.
+  } else if errB := c.ShouldBindBodyWith(&objB, binding.JSON); errB == nil {
+    c.String(http.StatusOK, `the body should be formB JSON`)
+  // And it can accepts other formats
+  } else if errB2 := c.ShouldBindBodyWith(&objB, binding.XML); errB2 == nil {
+    c.String(http.StatusOK, `the body should be formB XML`)
+  } else {
+    ...
+  }
+}
+```
+
+- `c.ShouldBindBodyWith` 在绑定之前将 Body 存储进了上下文中，这对性能有轻微的影响。
+- 这个特性只在 JSON、XML、MsgPack、ProtoBuf 等格式时有必要，对于字符串查询、表单等可以用 c.`ShouldBind()` 调用多次而不损失性能。
 
 ### 渲染 XML、JSON、YAML
 
@@ -1757,58 +1964,6 @@ func main() {
     r.Run()
 }
 ```
-
-### 尝试将 Body 绑定到不同的结构体
-
-一般的绑定请求数据的类型会消耗 `c.Request.Body`，所以不能被多次调用。
-
-```go
-type formA struct {
-  Foo string `json:"foo" xml:"foo" binding:"required"`
-}
-
-type formB struct {
-  Bar string `json:"bar" xml:"bar" binding:"required"`
-}
-
-func SomeHandler(c *gin.Context) {
-  objA := formA{}
-  objB := formB{}
-  // This c.ShouldBind consumes c.Request.Body and it cannot be reused.
-  if errA := c.ShouldBind(&objA); errA == nil {
-    c.String(http.StatusOK, `the body should be formA`)
-  // Always an error is occurred by this because c.Request.Body is EOF now.
-  } else if errB := c.ShouldBind(&objB); errB == nil {
-    c.String(http.StatusOK, `the body should be formB`)
-  } else {
-    ...
-  }
-}
-```
-
-这种情况，可以用 `c.ShouldBindBodyWith`：
-
-```go
-func SomeHandler(c *gin.Context) {
-  objA := formA{}
-  objB := formB{}
-  // This reads c.Request.Body and stores the result into the context.
-  if errA := c.ShouldBindBodyWith(&objA, binding.JSON); errA == nil {
-    c.String(http.StatusOK, `the body should be formA`)
-  // At this time, it reuses body stored in the context.
-  } else if errB := c.ShouldBindBodyWith(&objB, binding.JSON); errB == nil {
-    c.String(http.StatusOK, `the body should be formB JSON`)
-  // And it can accepts other formats
-  } else if errB2 := c.ShouldBindBodyWith(&objB, binding.XML); errB2 == nil {
-    c.String(http.StatusOK, `the body should be formB XML`)
-  } else {
-    ...
-  }
-}
-```
-
-- `c.ShouldBindBodyWith` 在绑定之前将 Body 存储进了上下文中，这对性能有轻微的影响。
-- 这个特性只在 JSON、XML、MsgPack、ProtoBuf 等格式时有必要，对于字符串查询、表单等可以用 c.`ShouldBind()` 调用多次而不损失性能。
 
 ### HTTP2 服务器推送技术
 
