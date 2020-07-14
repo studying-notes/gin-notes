@@ -26,7 +26,7 @@
   - [中间件](#中间件)
 	- [默认中间件](#默认中间件)
 	- [自定义中间件](#自定义中间件)
-	- [将中间件一分为二执行](#将中间件一分为二执行)
+	- [将中间件一分为二执行](#将中间件一分为二执行) - 即跳过中间件余下处理部分先执行主程序
 	- [官方示例](#官方示例)
   - [自定义从错误中恢复的行为](#自定义从错误中恢复的行为)
   - [写入日志文件](#写入日志文件)
@@ -1114,7 +1114,7 @@ func main() {
 
 ### 尝试将 Body 绑定到不同的结构体
 
-一般的绑定请求数据的类型会消耗 `c.Request.Body`，所以不能被多次调用。
+一般的绑定请求数据的类型会消耗 `c.Request.Body`，**读取之后就为空了**，所以不能被多次调用。
 
 ```go
 type formA struct {
@@ -1298,10 +1298,20 @@ func main() {
 ### 静态文件服务
 
 ```go
+func (group *RouterGroup) Static(relativePath, root string) IRoutes {
+	return group.StaticFS(relativePath, Dir(root, false))
+}
+
 func main() {
 	router := gin.Default()
+
+	// 文件夹，本地文件系统
 	router.Static("/assets", "./assets")
+
+	// 文件夹，可自定义文件系统
 	router.StaticFS("/more_static", http.Dir("my_file_system"))
+
+	// 单个文件
 	router.StaticFile("/favicon.ico", "./resources/favicon.ico")
 
 	router.Run(":8080")
