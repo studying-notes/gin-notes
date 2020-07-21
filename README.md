@@ -2,6 +2,7 @@
 
 - [多数据格式返回响应数据](doc/response.md)
 - [操作数据库](doc/database.md)
+- [用 Air 实现 Gin框架实时重新加载](examples/hot-reload/README.md)
 
 以下只是简单地翻译了一遍官方的文档，算是初步熟悉一下 Gin 框架。（2020.07.12）
 
@@ -782,6 +783,36 @@ func main() {
   - Methods - `ShouldBind`, `ShouldBindJSON`, `ShouldBindXML`, `ShouldBindQuery`, `ShouldBindYAML`, `ShouldBindHeader`
 
 当使用绑定类型时，Gin 尝试通过 `Content-Type` 参数值推断绑定的结构体。如果可以确定数据就是某种类型，可以使用 `MustBindWith` 或 `ShouldBindWith`。
+
+1. 解析错误在 header 中写一个 400 的状态码
+
+```go
+// 内部根据 Content-Type 判断解析
+c.Bind(obj interface{})
+
+// 内部传递了一个 binding.JSON 对象解析
+c.BindJSON(obj interface{})
+// 其实就是下面方法的快捷方式
+c.BindWith(obj interface{}, b binding.JSON)
+
+// 自行传入哪一种绑定的类型解析
+c.BindWith(obj interface{}, b binding.Binding)
+```
+
+2. 解析错误直接返回，至于要给客户端返回什么错误状态码由编写者决定
+
+```go
+// 内部根据 Content-Type 判断解析
+c.ShouldBind(obj interface{})
+
+// 内部传递了一个 binding.JSON 对象解析
+c.ShouldBindJSON(obj interface{})
+// 其实就是下面方法的快捷方式
+c.ShouldBindWith(obj interface{}, b binding.JSON)
+
+// 自行传入哪一种绑定的类型解析
+c.ShouldBindWith(obj interface{}, b binding.Binding)
+```
 
 ```go
 // Binding from JSON
