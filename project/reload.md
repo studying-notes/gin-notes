@@ -1,4 +1,4 @@
-# 用 Air 实现 Gin框架实时重新加载
+# 用 Air 实现 Gin 服务实时重载
 
 ```shell
 go get -u github.com/cosmtrek/air
