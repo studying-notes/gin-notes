@@ -1,16 +1,21 @@
-# Gin 传入参数校验
+---
+date: 2020-08-12T19:15:24+08:00  # 创建日期
+author: "Rustle Karl"  # 作者
 
-- [Gin 传入参数校验](#gin-传入参数校验)
-  - [官网](#官网)
-  - [数值比较符号](#数值比较符号)
-  - [标签详解](#标签详解)
-    - [dive](#dive)
-    - [required](#required)
-    - [oneof](#oneof)
-    - [字段间关系](#字段间关系)
-  - [Gin 增加的标签](#gin-增加的标签)
-    - [Content-Type](#content-type)
-    - [字段的默认值](#字段的默认值)
+# 文章
+title: "Gin 传入参数校验"  # 文章标题
+url:  "posts/gin/project/validator"  # 设置网页链接，默认使用文件名
+tags: [ "gin", "go", "validator" ]  # 自定义标签
+series: [ "Gin 学习笔记"]  # 文章主题/文章系列
+categories: [ "学习笔记"]  # 文章分类
+
+# 章节
+weight: 20 # 文章在章节中的排序优先级，正序排序
+chapter: false  # 将页面设置为章节
+
+index: true  # 文章是否可以被索引
+draft: false  # 草稿
+---
 
 ```
 go get github.com/go-playground/validator/v10
