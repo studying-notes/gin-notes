@@ -1,4 +1,21 @@
-# 用 Air 实现 Gin 服务实时重载
+---
+date: 2020-07-12T19:15:24+08:00  # 创建日期
+author: "Rustle Karl"  # 作者
+
+# 文章
+title: "用 Air 实现 Gin 服务实时重载"  # 文章标题
+url:  "posts/gin/project/reload"  # 设置网页链接，默认使用文件名
+tags: [ "gin", "go" ]  # 自定义标签
+series: [ "Gin 学习笔记"]  # 文章主题/文章系列
+categories: [ "学习笔记"]  # 文章分类
+
+# 章节
+weight: 20 # 文章在章节中的排序优先级，正序排序
+chapter: false  # 将页面设置为章节
+
+index: true  # 文章是否可以被索引
+draft: false  # 草稿
+---
 
 ```shell
 go get -u github.com/cosmtrek/air
