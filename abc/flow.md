@@ -1,12 +1,21 @@
-# Gin 处理流程分析
+---
+date: 2020-07-12T19:15:24+08:00  # 创建日期
+author: "Rustle Karl"  # 作者
 
-- [Gin 处理流程分析](#gin-处理流程分析)
-  - [简单示例](#简单示例)
-  - [处理流程图](#处理流程图)
-  - [gin.Default](#gindefault)
-  - [gin.New](#ginnew)
-  - [r.GET](#rget)
-  - [r.Run](#rrun)
+# 文章
+title: "Gin 处理流程分析"  # 文章标题
+url:  "posts/gin/abc/flow"  # 设置网页链接，默认使用文件名
+tags: [ "gin", "go" ]  # 自定义标签
+series: [ "Gin 学习笔记"]  # 文章主题/文章系列
+categories: [ "学习笔记"]  # 文章分类
+
+# 章节
+weight: 20 # 文章在章节中的排序优先级，正序排序
+chapter: false  # 将页面设置为章节
+
+index: true  # 文章是否可以被索引
+draft: false  # 草稿
+---
 
 ## 简单示例
 
@@ -40,7 +49,7 @@ func Default() *Engine {
 通过调用 gin.Default 方法创建默认的 Engine 实例，它会在初始化阶段引入 Logger 和 Recovery 中间件，保障应用程序最基本的运作。这两个中间件的作用如下。
 
 - Logger：输出请求日志，并标准化日志的格式。
-- Recovery：异常捕获，也就是针对每次请求处理进行 Recovery 处理，防止因为出现 panic 导致服务崩溃，同时将异常日志的格式标准化。
+- Recovery：异常捕获，也就是针对每次请求处理进行 Recovery 处理，包括恢复现场和写入 `500` 状态码，防止因为出现 `panic` 导致服务崩溃，同时将异常日志的格式标准化。
 
 另外，在调用 debugPrintWARNINGDefault 方法时，首先会检查 Go 版本是否达到 gin 的最低要求，然后再调试日志 `[WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.` 的输出，以此提醒开发人员框架内部已经开始检查并集成了默认值。
 
@@ -79,15 +88,15 @@ func New() *Engine {
 }
 ```
 
-- RouterGroup：路由组。所有的路由规则都由 `*RouterGroup` 所属的方法进行管理。在 gin 中，路由组和 `Engine` 实例形成了一个重要的关联组件。
-- RedirectTrailingSlash：是否自动重定向。如果启用，在无法匹配当前路由的情况下，则自动重定向到带有或不带斜杠的处理程序中。例如，当外部请求了 `/tour/` 路由，但当前并没有注册该路由规则，而只有 `/tour` 的路由规则时，将会在内部进行判定。若是 HTTP GET 请求，则会通过 HTTP Code 301 重定向到 `/tour` 的处理程序中；若是其他类型的 HTTP 请求，则会以 HTTP Code 307 重定向，通过指定的 HTTP 状态码重定向到 `/tour` 路由的处理程序中。
+- RouterGroup：路由组。所有的路由规则都由 ` * RouterGroup` 所属的方法进行管理。在 gin 中，路由组和 `Engine` 实例形成了一个重要的关联组件。
+- RedirectTrailingSlash：是否自动重定向。如果启用，在无法匹配当前路由的情况下，则自动重定向到带有或不带斜杠的处理程序中。例如，当外部请求了 ` / tour / ` 路由，但当前并没有注册该路由规则，而只有 ` / tour` 的路由规则时，将会在内部进行判定。若是 HTTP GET 请求，则会通过 HTTP Code 301 重定向到 ` / tour` 的处理程序中；若是其他类型的 HTTP 请求，则会以 HTTP Code 307 重定向，通过指定的 HTTP 状态码重定向到 ` / tour` 路由的处理程序中。
 - RedirectFixedPath：是否尝试修复当前请求路径，也就是在开启的情况下，gin 会尽可能地找到一个相似的路由规则，并在内部重定向。RedirectFixedPath 的主要功能是对当前的请求路径进行格式清除（删除多余的斜杠）和不区分大小写的路由查找等。
-- HandleMethodNotAllowed：判断当前路由是否允许调用其他方法，如果当前请求无法路由，则返回Method Not Allowed（HTTP Code 405）的响应结果。如果既无法路由，也不支持重定向到其他方法，则交由 NotFound Hander 进行处理。
+- HandleMethodNotAllowed：判断当前路由是否允许调用其他方法，如果当前请求无法路由，则返回 Method Not Allowed （ HTTP Code 405 ）的响应结果。如果既无法路由，也不支持重定向到其他方法，则交由 NotFound Hander 进行处理。
 - ForwardedByClientIP：如果开启，则尽可能地返回真实的客户端 IP 地址，先从 X-Forwarded-For 中取值，如果没有，则再从 X-Real-Ip 中取值。
 - UseRawPath：如果开启，则使用 url.RawPath 来获取请求参数；如果不开启，则还是按 url.Path 来获取请求参数。
 - UnescapePathValues：是否对路径值进行转义处理。
 - MaxMultipartMemory：对应 http.Request ParseMultipartForm 方法，用于控制最大的文件上传大小。
-- trees：多个压缩字典树（Radix Tree），每个树都对应一种 HTTP Method。可以这样理解，每当添加一个新路由规则时，就会往 HTTP Method 对应的树里新增一个 node 节点，以此形成关联关系。
+- trees：多个压缩字典树（ Radix Tree ），每个树都对应一种 HTTP Method。可以这样理解，每当添加一个新路由规则时，就会往 HTTP Method 对应的树里新增一个 node 节点，以此形成关联关系。
 - delims：用于 HTML 模板的左右定界符。
 
 总体来讲，Engine实例就像引擎一样，与整个应用的运行、路由、对象、模板等管理和调度都有关联。另外，通过上述解析可以发现，其实 gin 在初始化时默认已经做了很多事情，可以说是既定了一些默认运行基础。
@@ -161,9 +170,9 @@ func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 在 gin 中，Engine 结构体实现了 ServeHTTP 方法，即符合 http.Handler 接口标准
 
-- 从sync.Pool对象池中获取一个上下文对象。
+- 从 sync.Pool 对象池中获取一个上下文对象。
 - 重新初始化取出来的上下文对象。
-- 处理外部的HTTP请求。
+- 处理外部的 HTTP 请求。
 - 处理完毕，将取出的上下文对象返回给对象池。
 
 在这里，上下文的池化主要是为了防止频繁反复生成上下文对象，相对地提高性能，并且针对 gin 本身的处理逻辑进行二次封装处理。
