@@ -17,7 +17,7 @@ index: true  # 文章是否可以被索引
 draft: false  # 草稿
 ---
 
-```
+```shell
 go get github.com/go-playground/validator/v10
 ```
 
@@ -34,11 +34,27 @@ func (v *defaultValidator) lazyinit() {
 
 ## 官网
 
-```
+```shell
 https://github.com/go-playground/validator
 ```
 
-## 数值比较符号
+## 标签详解
+
+### 示例
+
+```go
+`binding:"required,min=2,max=100" example:"我的博客"`       
+```
+
+### 限制字符串长度
+
+2 <= length < 100
+
+```go
+`binding:"required,min=2,max=100" example:"我的博客"`       
+```
+
+### 数值比较
 
 - `eq`: equal，等于；
 - `ne`: not equal，不等于；
@@ -47,9 +63,7 @@ https://github.com/go-playground/validator
 - `lt`: less than，小于；
 - `lte`: less than equal，小于等于；
 
-## 标签详解
-
-### dive
+### 嵌套结构验证
 
 `dive` 一般用在 slice、array、map、嵌套的 struct 验证中，作为分隔符表示进入里面一层的验证规则。
 
@@ -65,7 +79,7 @@ type Test struct {
 }
 ```
 
-### required
+### 必填项
 
 `required` 表示字段必须有值，并且不为默认值，例如 `bool` 默认值为 `false`、`string` 默认值为 `””`、`int` 默认值为 `0`。如果有些字段是可填的，并且需要满足某些规则的，那么需要使用 `omitempty`。
 
@@ -78,7 +92,7 @@ type Test struct {
 }
 ```
 
-### oneof
+### 自定义枚举值
 
 oneof 自定义枚举值。
 

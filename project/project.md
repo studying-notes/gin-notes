@@ -29,6 +29,8 @@ project
 │  ├─model
 │  ├─routers
 │  └─service
+│           ├─client
+│           └─server
 ├─configs
 ├─docs
 ├─global

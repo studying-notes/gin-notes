@@ -21,18 +21,18 @@ draft: false  # 草稿
 
 建议用 Docker 启动：
 
-```
+```shell
 docker pull swaggerapi/swagger-editor
 docker run --restart=always -d -p 8080:8080 swaggerapi/swagger-editor
 ```
 
-```
+```shell
 localhost:8080
 ```
 
 ## 安装 swaggo
 
-```
+```shell
 go get -u github.com/swaggo/swag/cmd/swag
 ```
 
@@ -42,7 +42,7 @@ go get -u github.com/swaggo/swag/cmd/swag
 
 最后执行以下命令生成相关文档：
 
-```
+```shell
 swag init
 ```
 
@@ -50,7 +50,7 @@ swag init
 
 基本信息必须在 main.go 的 main 函数上添加注释，或者 `-g` 参数指定文件。
 
-```
+```shell
 swag init -g http/api.go
 ```
 
@@ -127,7 +127,7 @@ func main() {
 // @Param app_secret formData string true "密码"
 ```
 
-```Shell
+```shell
 curl -X POST "http://localhost:8000/auth" -H "accept: application/json" -H "Content-Type: multipart/form-data" -F "app_key=admin" -F "app_secret=admin"
 ```
 
@@ -139,7 +139,7 @@ curl -X POST "http://localhost:8000/auth" -H "accept: application/json" -H "Cont
 // @Param app_secret formData string true "密码"
 ```
 
-```Shell
+```shell
 curl -X POST "http://localhost:8000/auth" -H "accept: application/json" -H "Content-Type: application/x-www-form-urlencoded" -d "app_key=admin&app_secret=admin"
 ```
 
