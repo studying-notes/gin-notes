@@ -54,6 +54,16 @@ https://github.com/go-playground/validator
 `binding:"required,min=2,max=100" example:"我的博客"`       
 ```
 
+min 不能大于等于 max，否则将造成异常。
+
+### 字符串定长
+
+```go
+`binding:"required,len=100" example:"我的博客"`       
+```
+
+翻译中文比较特殊，len 必须大于 1，否则将造成异常。
+
 ### 数值比较
 
 - `eq`: equal，等于；
@@ -62,6 +72,16 @@ https://github.com/go-playground/validator
 - `gte`: great than equal，大于等于；
 - `lt`: less than，小于；
 - `lte`: less than equal，小于等于；
+
+```go
+// 分页处理
+type Pager struct {
+	Page      int `json:"page" form:"page,default=1"`                                    // 页码
+	PageSize  int `json:"page_size" form:"page_size,default=10" binding:"gte=5,lte=100"` // 每页数量
+	TotalRows int `json:"total_rows" form:"-"`                                           // 总行数
+	Order     int `json:"order" form:"order,default=0" binding:"oneof=0 1"`              // 排序顺序
+}      
+```
 
 ### 嵌套结构验证
 
