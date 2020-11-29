@@ -69,19 +69,19 @@ project
 
 ### 配置管理
 
-```
+```shell
 go get -u github.com/spf13/viper
 ```
 
 ### 数据库连接
 
-```
+```shell
 go get -u github.com/jinzhu/gorm
 ```
 
 ### 日志系统
 
-```
+```shell
 go get -u gopkg.in/natefinch/lumberjack.v2
 ```
 
@@ -93,10 +93,13 @@ go get -u gopkg.in/natefinch/lumberjack.v2
 
 ## Swagger 接口文档
 
-```
+```shell
 go get -u github.com/swaggo/swag/cmd/swag
 get -u github.com/swaggo/gin-swagger
 go get -u github.com/swaggo/files
+```
+
+```shell
 go get -u github.com/alecthomas/template
 ```
 
@@ -110,7 +113,7 @@ go get -u github.com/alecthomas/template
 
 开源项目 go-playground/validator 是一个基于标签对结构体和字段进行值验证的一个验证器。
 
-```
+```shell
 go get -u github.com/go-playground/validator/v10
 ```
 
@@ -137,7 +140,7 @@ go get -u github.com/go-playground/validator/v10
 
 #### 邮件报警处理
 
-```
+```shell
 go get -u gopkg.in/gomail.v2
 ```
 
@@ -153,7 +156,7 @@ gomail 是一个用于发送电子邮件的简单且高效的第三方开源库�
 
 [![Bc9knA.png](https://s1.ax1x.com/2020/11/04/Bc9knA.png)](https://imgchr.com/i/Bc9knA)
 
-```
+```shell
 go get -u github.com/juju/ratelimit
 ```
 
@@ -188,7 +191,7 @@ OpenTracing 规范的出现是为了解决不同供应商的分布式追踪系�
 
 目前，市面上比较流行的追踪系统的思维模型均起源于 Google 的 Dapper，a Large-Scale Distributed Systems Tracing Infrastructure 论文。OpenTracing 规范也不例外，它有一系列约定的术语概念知识，追踪系统中常见的3个术语含义如表所示。
 
-![](../imgs/trace.png)
+[![BjCgi9.png](https://s1.ax1x.com/2020/11/11/BjCgi9.png)](https://imgchr.com/i/BjCgi9)
 
 ### Jaeger 的使用
 
@@ -200,17 +203,17 @@ Jaeger 是 uber 开源的一个分布式链路追踪系统，受到了Google Dap
 
 Jaeger 官方提供了 all-in-one 的安装包，提供了Docker 或已打包好的二进制文件，直接运行即可。这里通过 Docker 的方式安装并启动：
 
-```
+```shell
 docker run -d --name jaeger -e COLLECTOR_ZIPKIN_HTTP_PORT=9411 -p 5775:5775/udp -p 6831:6831/udp -p 6832:6832/udp -p 5778:5778 -p 16686:16686 -p 14268:14268 -p 9411:9411 jaegertracing/all-in-one
 ```
 
-![](../imgs/jaeger.png)
+[![BjPVyV.png](https://s1.ax1x.com/2020/11/11/BjPVyV.png)](https://imgchr.com/i/BjPVyV)
 
 访问 `http://localhost:16686` 可看到 Jaeger Web UI 界面则表示已经成功。
 
 ### 在应用中注入追踪
 
-```
+```shell
 go get -u github.com/opentracing/opentracing-go
 go get -u github.com/uber/jaeger-client-go
 ```
@@ -219,41 +222,55 @@ go get -u github.com/uber/jaeger-client-go
 
 在记录日志时，把链路的 SpanID 和 TraceID 也记录进去，这样就可以串联起该次请求的所有请求链路和日志信息情况，而且实现的方式并不难，只需在对应方法的第一个参数中传入上下文（context），并在内部解析此上下文来获取链路信息即可。
 
-### 实现SQL追踪
+### 实现 SQL 追踪
+
+在 Jaeger UI 可视化界面可以查看。
 
 ## 应用配置问题
 
 配置文件这种非 .go 文件的文件类型，并不会被打包进二进制文件中。
 
-实际上，go run 命令并不像 go build 命令那样可以直接编译输出当前目录，而是将其转化到临时目录下编译并执行，是一个相对临时的运行路径。
+实际上，**go run** 命令并不像 go build 命令那样可以直接编译输出当前目录，而是将其转化到**临时目录下编译并执行**，是一个相对临时的运行路径。
 
 - go run 命令和 go build 命令的不同之处在于，一个是在临时目录下执行，另一个可手动在编译后的目录下执行，路径的处理方式不同。
 - 每次执行 go run 命令之后，生成的新的二进制文件不一定在同一个地方。
-- 依赖相对路径读取的文件在没有遵守约定条件时，有可能出现最终路径出错的问题。
+- **依赖相对路径读取的文件在没有遵守约定条件时，有可能出现最终路径出错的问题**。
 
-### 解决方案
-
-#### 命令行参数
+### 命令行参数
 
 在 Go 语言中，可以直接通过 flag 标准库来实现该功能。实现逻辑为，如果存在命令行参数，则优先使用命令行参数，否则使用配置文件中的配置参数。
 
-#### 系统环境变量
+### 系统环境变量
 
-#### 打包进二进制文件中
-
+```go
+os.Getenv("env")
 ```
-go get -u github.com/go-bindata/go-bindata
 
+### 打包进二进制文件中
+
+```shell
+go get -u github.com/go-bindata/go-bindata
+```
+
+通过 go-bindata 库可以将数据文件转换为 Go 代码。例如，常见的配置文件、资源文件（如 Swagger UI ）等都可以打包进 Go 代码中，这样就可以 “ 摆脱 ” 静态资源文件了。接下来在项目根目录下执行生成命令：
+
+```shell
 go-bindata -o configs/config.go -pkg=configs configs/config.yaml
+```
+
+执行这条命令后，会将 configs/config.yaml 文件打包，并通过 -o 选项指定的路径输出到 configs/config.go 文件中，再通过设置的 -pkg 选项指定生成的 package name 为 configs，接下来只需执行下述代码，就可以读取对应的文件内容了：
+
+```go
+b, _ := configs.Asset("configs/config.yaml")
 ```
 
 把第三方文件打包进二进制文件后，二进制文件必然增大，而且在常规方法下无法做文件的热更新和监听，必须要重启并且重新打包才能使用最新的内容，因此这种方式是有利有弊的。
 
-### 配置热更新
+## 配置热更新
 
 开源库 fsnotify 是用 Go 语言编写的跨平台文件系统监听事件库，常用于文件监听，因此我们可以借助该库来实现这个功能。
 
-```
+```shell
 go get -u github.com/fsnotify/fsnotify
 ```
 
@@ -297,7 +314,3 @@ go get -u github.com/fsnotify/fsnotify
 - 新的子进程开始Accept。
 - 系统将新的请求转交新的子进程。
 - 旧进程处理完所有旧连接后正常退出。
-
-```
-
-```
