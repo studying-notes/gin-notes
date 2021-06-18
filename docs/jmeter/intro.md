@@ -72,6 +72,10 @@ https://mirror.bit.edu.cn/apache//jmeter/binaries/apache-jmeter-5.2.1.zip
 
 在 bin 目录中，还有其他几个测试人员可能会用到的脚本。
 
+```shell
+wmic ENVIRONMENT where "name='Path' and username='<system>'" set VariableValue="%Path%;C:\Developer\apache-jmeter-5.2.1\bin"
+```
+
 ### Windows 脚本
 
 - jmeter.bat ——运行 JMeter （默认 GUI 模式）。
